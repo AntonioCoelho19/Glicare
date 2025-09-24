@@ -1,16 +1,25 @@
-# glicare
+O Glicare é um aplicativo desenvolvido em Flutter para auxiliar pessoas com diabetes no controle da glicemia, registros de insulina, medicamentos, refeições e geração de gráficos de acompanhamento.
 
-A new Flutter project.
+✨ Funcionalidades
 
-## Getting Started
+Registro de glicemia, insulina e pressão arterial.
 
-This project is a starting point for a Flutter application.
+Gerenciamento de medicamentos (nome, dosagem, unidade, frequência, duração).
 
-A few resources to get you started if this is your first Flutter project:
+Registro de refeições (tipo de refeição, alimentos, porção e imagem).
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Visualização de registros em listas filtráveis (período, medicamentos, intervalo de glicemia).
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Exibição de gráficos de variação glicêmica (dia, semana, mês).
+
+Persistência de dados com SQLite.
+
+🛠️ Tecnologias Utilizadas
+
+Flutter (framework principal)
+
+Dart (linguagem de programação)
+
+SQLite (sqflite) para persistência local
+
+Material Design 3 para interface
