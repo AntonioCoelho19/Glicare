@@ -20,6 +20,4 @@ O Glicare é um aplicativo desenvolvido em Flutter para auxiliar pessoas com dia
 
   - Dart (linguagem de programação)
 
-  - SQLite (sqflite) para persistência local
-
-  - Material Design 3 para interface
+  - SQLite (sqflite) para banco de dados
