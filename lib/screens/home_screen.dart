@@ -17,7 +17,14 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final bool isDarkMode;
+  final Function(bool) onThemeChanged;
+
+  const HomeScreen({
+    required this.isDarkMode,
+    required this.onThemeChanged,
+    super.key,
+  });
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -355,8 +362,15 @@ class _HomeScreenState extends State<HomeScreen> {
               title: const Text('Configurações'),
               onTap: () {
                 Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => SettingsScreen(
+                          isDarkMode: widget.isDarkMode,
+                          onThemeChanged: widget.onThemeChanged,
+                        ),
+                  ),
                 );
               },
             ),

@@ -207,7 +207,7 @@ class _ListScreenState extends State<ListScreen> {
                 child: Column(
                   children: [
                     DropdownButtonFormField<String>(
-                      value: _selectedPeriod,
+                      initialValue: _selectedPeriod,
                       items: const [
                         DropdownMenuItem(value: '-', child: Text('-')),
                         DropdownMenuItem(
@@ -229,7 +229,7 @@ class _ListScreenState extends State<ListScreen> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<Medication>(
-                      value: _selectedMedication,
+                      initialValue: _selectedMedication,
                       items: [
                         const DropdownMenuItem<Medication>(
                           value: null,

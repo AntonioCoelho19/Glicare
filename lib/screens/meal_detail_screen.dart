@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/meal.dart';
 import '../database/meal_db.dart';
-import 'add_meal_screen.dart';
 import 'edit_meal_screen.dart';
 
 class MealDetailScreen extends StatefulWidget {

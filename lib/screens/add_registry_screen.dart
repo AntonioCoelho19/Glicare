@@ -441,7 +441,7 @@ class _AddRegistryScreenState extends State<AddRegistryScreen> {
               decoration: const InputDecoration(labelText: 'Duração (min)'),
             ),
             DropdownButtonFormField<String?>(
-              value: _intensity,
+              initialValue: _intensity,
               items: const [
                 DropdownMenuItem(value: null, child: Text('-')),
                 DropdownMenuItem(value: 'Leve', child: Text('Leve')),

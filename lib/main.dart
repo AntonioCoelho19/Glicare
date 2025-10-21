@@ -1,28 +1,73 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'screens/home_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../screens/home_screen.dart'; // ajuste o caminho da sua tela inicial
+import '../screens/settings_screen.dart'; // seu arquivo SettingsScreen
 
-void main() {
-  initializeDateFormatting('pt_BR', null).then((_) {
-    runApp(MyApp());
-  });
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final prefs = await SharedPreferences.getInstance();
+  final isDarkMode = prefs.getBool('darkMode') ?? false;
+
+  runApp(GlicareApp(isDarkMode: isDarkMode));
 }
 
-class MyApp extends StatelessWidget {
+class GlicareApp extends StatefulWidget {
+  final bool isDarkMode;
+  const GlicareApp({super.key, required this.isDarkMode});
+
+  @override
+  State<GlicareApp> createState() => _GlicareAppState();
+}
+
+class _GlicareAppState extends State<GlicareApp> {
+  late bool _isDarkMode;
+
+  @override
+  void initState() {
+    super.initState();
+    _isDarkMode = widget.isDarkMode;
+  }
+
+  void _updateDarkMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('darkMode', value);
+    setState(() {
+      _isDarkMode = value;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'Glicare',
-      locale: const Locale('pt', 'BR'),
-      supportedLocales: const [Locale('en', 'US'), Locale('pt', 'BR')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: HomeScreen(),
+      debugShowCheckedModeBanner: false,
+      themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      theme: ThemeData(
+        brightness: Brightness.light,
+        primarySwatch: Colors.teal,
+        scaffoldBackgroundColor: Colors.grey[100],
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.teal,
+          foregroundColor: Colors.white,
+        ),
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        colorScheme: const ColorScheme.dark(
+          primary: Colors.teal,
+          secondary: Colors.tealAccent,
+        ),
+        scaffoldBackgroundColor: Colors.black,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.teal,
+          foregroundColor: Colors.white,
+        ),
+      ),
+      home: HomeScreen(
+        isDarkMode: _isDarkMode,
+        onThemeChanged: _updateDarkMode,
+      ),
     );
   }
 }

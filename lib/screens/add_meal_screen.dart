@@ -108,7 +108,7 @@ class _AddMealScreenState extends State<AddMealScreen> {
                           Expanded(
                             flex: 3,
                             child: DropdownButtonFormField<String>(
-                              value: _selectedUnit,
+                              initialValue: _selectedUnit,
                               items:
                                   allUnits
                                       .map(
@@ -195,9 +195,6 @@ class _AddMealScreenState extends State<AddMealScreen> {
                         Map<String, dynamic> nutritionMap = {};
                         try {
                           nutritionMap = jsonDecode(_nutritionController.text);
-                          if (nutritionMap is! Map<String, dynamic>) {
-                            nutritionMap = {'info': _nutritionController.text};
-                          }
                         } catch (e) {
                           nutritionMap = {'info': _nutritionController.text};
                         }
@@ -315,7 +312,7 @@ class _AddMealScreenState extends State<AddMealScreen> {
         child: ListView(
           children: [
             DropdownButtonFormField<String>(
-              value: _selectedMealType,
+              initialValue: _selectedMealType,
               items:
                   _mealTypes
                       .map(
