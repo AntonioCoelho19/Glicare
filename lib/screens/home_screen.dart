@@ -13,6 +13,7 @@ import '../models/meal.dart';
 import 'add_meal_screen.dart';
 import '../database/meal_db.dart';
 import 'settings_screen.dart';
+import '../database/settings_db.dart'; // Importar o novo DB
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -35,9 +36,14 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Medication> _medications = [];
   List<Meal> _meals = [];
 
+  // Metas de Glicemia
+  double? _minGlicemiaGoal;
+  double? _maxGlicemiaGoal;
+
   final _registryDB = RegistryDB();
   final _medicationDB = MedicationDB();
   final _mealDB = MealDB();
+  final _settingsDB = SettingsDB(); // Instância do novo DB
 
   @override
   void initState() {
@@ -55,11 +61,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final meds = await _medicationDB.getAllMedications();
     final regs = await _registryDB.getRegistries();
     final meals = await _mealDB.getAllMeals();
+    final goals = await _settingsDB.loadGlicemiaGoals(); // Carregar metas
 
     setState(() {
       _medications = meds;
       _registries = regs;
       _meals = meals;
+      _minGlicemiaGoal = goals?['minGlicemia'];
+      _maxGlicemiaGoal = goals?['maxGlicemia'];
     });
   }
 
@@ -81,10 +90,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildRegistryCard(BuildContext context, Registry registry) {
     return Card(
       elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
       child: ListTile(
         onTap: () async {
-          await Navigator.of(context).push(
+          final shouldReload = await Navigator.of(context).push<bool>(
             MaterialPageRoute(
               builder:
                   (_) => AddRegistryScreen(
@@ -95,15 +104,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
             ),
           );
-          await _loadData();
+          if (shouldReload == true) {
+            await _loadData();
+          }
         },
         leading: const Icon(Icons.bloodtype, color: Colors.red),
         title: Text('Glicemia: ${registry.glicemia} mg/dL'),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Insulina Longa: ${registry.insulinaLonga} U'),
-            Text('Insulina Curta: ${registry.insulinaCurta} U'),
+            Text('Insulina Longa: ${registry.insulinaLonga ?? 0} U'),
+            Text('Insulina Curta: ${registry.insulinaCurta ?? 0} U'),
             if (registry.medication != null)
               Text('Medicação: ${registry.medication!.name}'),
             if (registry.weight != null) Text('Peso: ${registry.weight} kg'),
@@ -131,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildMealCard(BuildContext context, Meal meal) {
     return Card(
       elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
       child: ListTile(
         onTap: () async {
           final shouldReload = await Navigator.of(context).push<bool>(
@@ -141,7 +152,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     meal: meal,
                     onUpdate: (updatedMeal) async {
                       await _mealDB.insertMeal(updatedMeal);
-                      await _loadData();
                     },
                   ),
             ),
@@ -162,6 +172,81 @@ class _HomeScreenState extends State<HomeScreen> {
           DateFormat('HH:mm').format(meal.date),
           style: const TextStyle(fontSize: 14, color: Colors.deepOrange),
         ),
+      ),
+    );
+  }
+
+  Widget _buildGlicemiaAlert(double avgGly) {
+    if (_minGlicemiaGoal == null || _maxGlicemiaGoal == null || avgGly == 0) {
+      if (_minGlicemiaGoal == null || _maxGlicemiaGoal == null) {
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          color: Colors.orange.shade100,
+          elevation: 2,
+          child: const ListTile(
+            leading: Icon(Icons.warning_amber, color: Colors.orange),
+            title: Text(
+              'Metas de Glicemia não definidas',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            subtitle: Text(
+              'Defina suas metas nas Configurações para monitorar seu controle.',
+              style: TextStyle(color: Colors.black54),
+            ),
+          ),
+        );
+      }
+      return const SizedBox.shrink();
+    }
+
+    String message;
+    Color color;
+    IconData icon;
+
+    // Alerta de Hipoglicemia (abaixo do mínimo)
+    if (avgGly < _minGlicemiaGoal!) {
+      message =
+          'Glicemia média baixa (${avgGly.toStringAsFixed(1)} mg/dL). Risco de hipoglicemia!';
+      color = Colors.red.shade100;
+      icon = Icons.arrow_downward;
+    }
+    // Alerta de Hiperglicemia (acima do máximo)
+    else if (avgGly > _maxGlicemiaGoal!) {
+      message =
+          'Glicemia média alta (${avgGly.toStringAsFixed(1)} mg/dL). Risco de hiperglicemia.';
+      color = Colors.yellow.shade100;
+      icon = Icons.arrow_upward;
+    }
+    // Dentro da meta
+    else {
+      message =
+          'Glicemia média (${avgGly.toStringAsFixed(1)} mg/dL) está dentro da sua meta!';
+      color = Colors.green.shade100;
+      icon = Icons.check_circle_outline;
+    }
+
+    final title =
+        (avgGly >= _minGlicemiaGoal! && avgGly <= _maxGlicemiaGoal!)
+            ? 'Controle Glicêmico'
+            : 'Atenção!';
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: color,
+      elevation: 2,
+      child: ListTile(
+        leading: Icon(icon, color: Colors.black87),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        subtitle: Text(message, style: const TextStyle(color: Colors.black54)),
       ),
     );
   }
@@ -188,7 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
             )
             .toList();
 
-    final avgGly =
+    final double avgGly =
         todayRegs.isNotEmpty
             ? todayRegs.map((r) => r.glicemia).reduce((a, b) => a + b) /
                 todayRegs.length
@@ -199,24 +284,32 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildGlicemiaAlert(avgGly),
+
           Card(
             margin: const EdgeInsets.all(16),
             elevation: 4,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            color: Colors.green.shade50,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.teal.withOpacity(0.2)
+                    : Colors.green.shade50,
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Resumo de Hoje',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.green,
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.tealAccent
+                              : Colors.green,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -231,16 +324,27 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: Colors.red,
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'Glicemia média',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white70
+                                      : Colors.black87,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             '${avgGly.toStringAsFixed(1)} mg/dL',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
-                              color: Colors.black87,
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : Colors.black87,
                             ),
                           ),
                         ],
@@ -253,14 +357,28 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: Colors.orange,
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'Refeições',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white70
+                                      : Colors.black87,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             '${todayMeals.length}',
-                            style: const TextStyle(fontSize: 16),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : Colors.black87,
+                            ),
                           ),
                         ],
                       ),
@@ -272,14 +390,28 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: Colors.blue,
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'Registros',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white70
+                                      : Colors.black87,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             '${todayRegs.length}',
-                            style: const TextStyle(fontSize: 16),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : Colors.black87,
+                            ),
                           ),
                         ],
                       ),
@@ -292,7 +424,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           if (todayRegs.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
                 'Registros de Hoje',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -360,9 +492,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Configurações'),
-              onTap: () {
+              onTap: () async {
                 Navigator.of(context).pop();
-                Navigator.push(
+                await Navigator.push(
+                  // Usa 'await' para esperar o retorno e recarregar
                   context,
                   MaterialPageRoute(
                     builder:
@@ -372,6 +505,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                   ),
                 );
+                _loadData(); // Recarrega os dados (incluindo as metas)
               },
             ),
             const ListTile(

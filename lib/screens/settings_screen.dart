@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../database/settings_db.dart'; // Importar o novo DB
 
 class SettingsScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -21,9 +22,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   double? _peso;
   String? _tipoDiabetes;
 
-  // Metas de glicose
-  double? _minGlicose;
-  double? _maxGlicose;
+  // Metas de glicemia
+  double? _minGlicemia;
+  double? _maxGlicemia;
+  final _settingsDB = SettingsDB(); // Instância do DB
 
   // Modo escuro
   bool _isDarkMode = false;
@@ -40,13 +42,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadDarkModePreference();
+    _loadPreferences();
   }
 
-  Future<void> _loadDarkModePreference() async {
+  Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
+    final goals = await _settingsDB.loadGlicemiaGoals();
+
     setState(() {
-      _isDarkMode = prefs.getBool('darkMode') ?? false;
+      _isDarkMode = prefs.getBool('darkMode') ?? widget.isDarkMode;
+      if (goals != null) {
+        _minGlicemia = goals['minGlicemia'];
+        _maxGlicemia = goals['maxGlicemia'];
+      }
     });
   }
 
@@ -61,9 +69,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     widget.onThemeChanged(value);
   }
 
-  void _openGlicoseGoalsDialog() {
-    if (_minGlicose != null) _minController.text = _minGlicose!.toString();
-    if (_maxGlicose != null) _maxController.text = _maxGlicose!.toString();
+  void _openGlicemiaGoalsDialog() {
+    if (_minGlicemia != null) _minController.text = _minGlicemia!.toString();
+    if (_maxGlicemia != null) _maxController.text = _maxGlicemia!.toString();
 
     showDialog(
       context: context,
@@ -71,7 +79,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           (context) => AlertDialog(
             backgroundColor: _isDarkMode ? Colors.grey[900] : Colors.white,
             title: const Text(
-              'Definir Metas de Glicose',
+              'Definir Metas de Glicemia',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             content: Form(
@@ -83,7 +91,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     controller: _minController,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                      labelText: 'Glicose mínima (mg/dL)',
+                      labelText: 'Glicemia mínima (mg/dL)',
                       prefixIcon: Icon(
                         Icons.arrow_downward,
                         color: Colors.teal,
@@ -91,7 +99,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Informe a glicose mínima';
+                        return 'Informe a glicemia mínima';
                       }
                       final v = double.tryParse(value);
                       if (v == null || v < 0) {
@@ -105,12 +113,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     controller: _maxController,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                      labelText: 'Glicose máxima (mg/dL)',
+                      labelText: 'Glicemia máxima (mg/dL)',
                       prefixIcon: Icon(Icons.arrow_upward, color: Colors.teal),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Informe a glicose máxima';
+                        return 'Informe a glicemia máxima';
                       }
                       final v = double.tryParse(value);
                       if (v == null || v <= 0) {
@@ -141,16 +149,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onPressed: () {
+                onPressed: () async {
                   if (_formKey.currentState!.validate()) {
+                    final min = double.parse(_minController.text);
+                    final max = double.parse(_maxController.text);
+
+                    await _settingsDB.saveGlicemiaGoals(min, max);
+
                     setState(() {
-                      _minGlicose = double.parse(_minController.text);
-                      _maxGlicose = double.parse(_maxController.text);
+                      _minGlicemia = min;
+                      _maxGlicemia = max;
                     });
+
                     Navigator.of(context).pop();
                   }
                 },
-                child: const Text('Salvar'),
+
+                child: const Text(
+                  'Salvar',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),
@@ -280,7 +298,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: _isDarkMode ? Colors.teal[200] : Colors.teal,
+          color: _isDarkMode ? Colors.teal[300] : Colors.teal,
         ),
       ),
     );
@@ -342,7 +360,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 20),
 
-            _buildSectionTitle('Metas de Glicose'),
+            _buildSectionTitle('Metas de Glicemia'),
             Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -357,13 +375,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 title: Text(
-                  'Definir Metas de Glicose',
+                  'Definir Metas de Glicemia',
                   style: TextStyle(color: textColor),
                 ),
                 subtitle:
-                    _minGlicose != null && _maxGlicose != null
+                    _minGlicemia != null && _maxGlicemia != null
                         ? Text(
-                          'Meta atual: $_minGlicose - $_maxGlicose mg/dL',
+                          'Meta atual: $_minGlicemia - $_maxGlicemia mg/dL',
                           style: TextStyle(color: textColor.withOpacity(0.8)),
                         )
                         : Text(
@@ -371,7 +389,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           style: TextStyle(color: textColor.withOpacity(0.8)),
                         ),
                 trailing: const Icon(Icons.edit, size: 18, color: Colors.teal),
-                onTap: _openGlicoseGoalsDialog,
+                onTap: _openGlicemiaGoalsDialog,
               ),
             ),
             const SizedBox(height: 20),
@@ -409,14 +427,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 title: Text('Sobre o app', style: TextStyle(color: textColor)),
                 subtitle: Text(
-                  'Versão 0.5',
+                  'Versão 1.0',
                   style: TextStyle(color: textColor.withOpacity(0.8)),
                 ),
                 onTap: () {
                   showAboutDialog(
                     context: context,
                     applicationName: 'Glicare',
-                    applicationVersion: '0.5',
+                    applicationVersion: '1.0',
                     applicationLegalese: '© 2025 Glicare',
                   );
                 },

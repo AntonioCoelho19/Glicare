@@ -44,27 +44,7 @@ class _MealsScreenState extends State<MealsScreen> {
   }
 
   Icon _getMealIcon(String mealType) {
-    switch (mealType.toLowerCase()) {
-      case 'café da manhã':
-        return const Icon(
-          Icons.free_breakfast,
-          size: 36,
-          color: Colors.deepOrange,
-        );
-      case 'almoço':
-        return const Icon(Icons.restaurant, size: 36, color: Colors.deepOrange);
-      case 'jantar':
-        return const Icon(
-          Icons.dinner_dining,
-          size: 36,
-          color: Colors.deepOrange,
-        );
-      case 'lanche':
-      case 'snack':
-        return const Icon(Icons.fastfood, size: 36, color: Colors.deepOrange);
-      default:
-        return const Icon(Icons.food_bank, size: 36, color: Colors.deepOrange);
-    }
+    return const Icon(Icons.fastfood, size: 36, color: Colors.deepOrange);
   }
 
   String _formatNutrition(Map<String, dynamic> nutrition) {
@@ -85,6 +65,10 @@ class _MealsScreenState extends State<MealsScreen> {
   }
 
   Widget _buildMealCard(BuildContext context, Meal meal) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: () async {
         final updated = await Navigator.push(
@@ -112,8 +96,11 @@ class _MealsScreenState extends State<MealsScreen> {
           });
         }
       },
-
       child: Card(
+        color:
+            isDark
+                ? const Color(0xFF1E1E1E)
+                : Colors.white, // fundo do card adaptado
         elevation: 5,
         margin: const EdgeInsets.symmetric(vertical: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -138,17 +125,20 @@ class _MealsScreenState extends State<MealsScreen> {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: Colors.deepOrange.shade100,
+                      color:
+                          isDark
+                              ? Colors.deepOrange.withOpacity(0.2)
+                              : Colors.deepOrange.shade100,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(child: _getMealIcon(meal.type)),
                   ),
           title: Text(
             meal.type,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
               fontSize: 18,
-              color: Colors.deepOrange,
+              color: Colors.deepOrange.shade400,
             ),
           ),
           subtitle: Padding(
@@ -176,9 +166,9 @@ class _MealsScreenState extends State<MealsScreen> {
                       padding: const EdgeInsets.only(bottom: 4),
                       child: RichText(
                         text: TextSpan(
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Colors.black87,
+                            color: isDark ? Colors.white70 : Colors.black87,
                           ),
                           children: [
                             TextSpan(text: item.name),
@@ -187,7 +177,10 @@ class _MealsScreenState extends State<MealsScreen> {
                                 text: infosText,
                                 style: TextStyle(
                                   fontStyle: FontStyle.italic,
-                                  color: Colors.grey.shade700,
+                                  color:
+                                      isDark
+                                          ? Colors.grey.shade400
+                                          : Colors.grey.shade700,
                                 ),
                               ),
                           ],
@@ -201,7 +194,7 @@ class _MealsScreenState extends State<MealsScreen> {
             DateFormat('HH:mm').format(meal.date),
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey.shade600,
+              color: isDark ? Colors.tealAccent.shade100 : Colors.grey.shade700,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -213,6 +206,8 @@ class _MealsScreenState extends State<MealsScreen> {
   @override
   Widget build(BuildContext context) {
     final groupedMeals = _groupMealsByDate();
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Refeições')),
@@ -221,7 +216,10 @@ class _MealsScreenState extends State<MealsScreen> {
               ? Center(
                 child: Text(
                   'Nenhuma refeição registrada.',
-                  style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: isDark ? Colors.white60 : Colors.grey.shade700,
+                  ),
                 ),
               )
               : ListView.builder(
@@ -243,7 +241,10 @@ class _MealsScreenState extends State<MealsScreen> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.deepOrange.shade700,
+                          color:
+                              isDark
+                                  ? Colors.tealAccent
+                                  : Colors.deepOrange.shade700,
                         ),
                       ),
                       const SizedBox(height: 10),

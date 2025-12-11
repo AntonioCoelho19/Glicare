@@ -23,7 +23,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -80,6 +80,14 @@ class DatabaseHelper {
         FOREIGN KEY (meal_id) REFERENCES meals(id) ON DELETE CASCADE
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE settings (
+        id INTEGER PRIMARY KEY,
+        minGlicemia REAL,
+        maxGlicemia REAL
+      )
+    ''');
   }
 
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -104,6 +112,15 @@ class DatabaseHelper {
       await db.execute(
         'ALTER TABLE registries ADD COLUMN activityDescription TEXT',
       );
+    }
+    if (oldVersion < 4) {
+      await db.execute('''
+        CREATE TABLE settings (
+          id INTEGER PRIMARY KEY,
+          minGlicemia REAL,
+          maxGlicemia REAL
+        )
+      ''');
     }
   }
 

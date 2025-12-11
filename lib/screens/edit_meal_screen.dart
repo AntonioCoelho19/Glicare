@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/meal.dart';
@@ -8,31 +9,31 @@ import 'package:intl/intl.dart';
 class EditMealScreen extends StatefulWidget {
   final Meal meal;
   final void Function(Meal) onUpdate;
-
   const EditMealScreen({required this.meal, required this.onUpdate, super.key});
-
   @override
   State<EditMealScreen> createState() => _EditMealScreenState();
 }
 
 class _EditMealScreenState extends State<EditMealScreen> {
   final _mealTypes = ['Café da manhã', 'Almoço', 'Jantar', 'Lanche', 'Ceia'];
-
   String? _selectedMealType;
   List<Map<String, dynamic>> _foods = [];
   File? _mealImage;
   DateTime? _selectedDate;
-
   final _foodNameController = TextEditingController();
   final _portionController = TextEditingController();
   final _nutritionController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
-
     _selectedMealType = widget.meal.type;
     _selectedDate = widget.meal.date;
+
+    // Sincronizando o _selectedDate para garantir que não seja nulo na inicialização
+    if (_selectedDate == null) {
+      _selectedDate = DateTime.now();
+    }
+
     _foods =
         widget.meal.items
             .map(
@@ -43,7 +44,6 @@ class _EditMealScreenState extends State<EditMealScreen> {
               },
             )
             .toList();
-
     if (widget.meal.imagePath != null) {
       _mealImage = File(widget.meal.imagePath!);
     }
@@ -74,6 +74,12 @@ class _EditMealScreenState extends State<EditMealScreen> {
     _foodNameController.clear();
     _portionController.clear();
     _nutritionController.clear();
+
+    // Define a cor de destaque (accentColor) para o TextButton
+    final accentColor =
+        Theme.of(context).brightness == Brightness.dark
+            ? Theme.of(context).colorScheme.secondary
+            : Colors.deepOrange;
 
     showDialog(
       context: context,
@@ -181,7 +187,12 @@ class _EditMealScreenState extends State<EditMealScreen> {
                         _nutritionController.clear();
                         Navigator.pop(context);
                       },
-                      child: const Text('Cancelar'),
+                      child: Text(
+                        'Cancelar',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                      ),
                     ),
                     ElevatedButton(
                       onPressed: () {
@@ -266,25 +277,124 @@ class _EditMealScreenState extends State<EditMealScreen> {
     }
   }
 
-  Future<void> _pickTime() async {
-    final now = TimeOfDay.now();
-    final initialTime = TimeOfDay.fromDateTime(_selectedDate ?? DateTime.now());
-    final pickedTime = await showTimePicker(
-      context: context,
-      initialTime: initialTime,
-    );
-    if (pickedTime != null) {
-      final currentDate = _selectedDate ?? DateTime.now();
-      setState(() {
-        _selectedDate = DateTime(
-          currentDate.year,
-          currentDate.month,
-          currentDate.day,
-          pickedTime.hour,
-          pickedTime.minute,
-        );
-      });
+  Future<void> _showCupertinoTimePicker() async {
+    // Garantia de não-nulidade: Inicializa com a hora atual se nulo.
+    if (_selectedDate == null) {
+      _selectedDate = DateTime.now();
     }
+
+    // Usa o valor garantido (_selectedDate!)
+    DateTime tempDateTime = DateTime(
+      _selectedDate!.year,
+      _selectedDate!.month,
+      _selectedDate!.day,
+      _selectedDate!.hour,
+      _selectedDate!.minute,
+    );
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final pickerTextColor = isDark ? Colors.white : Colors.black;
+    final pickerBackgroundColor = isDark ? Colors.black : Colors.white;
+
+    final titleTextColor = isDark ? Colors.white : Colors.deepOrange.shade700;
+
+    late Color finalButtonColor;
+    late Color finalContentColor;
+
+    if (isDark) {
+      finalButtonColor = theme.colorScheme.secondary;
+      finalContentColor = Colors.black;
+    } else {
+      finalButtonColor = Colors.deepOrange;
+      finalContentColor = Colors.white;
+    }
+
+    await showModalBottomSheet(
+      context: context,
+      useSafeArea: true,
+      builder:
+          (_) => Container(
+            color: pickerBackgroundColor,
+            height: 320,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'Selecione a Hora da Refeição',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: titleTextColor,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
+                const Divider(height: 1),
+
+                Expanded(
+                  child: CupertinoTheme(
+                    data: CupertinoThemeData(
+                      textTheme: CupertinoTextThemeData(
+                        dateTimePickerTextStyle: TextStyle(
+                          color: pickerTextColor,
+                          fontSize: 21,
+                        ),
+                      ),
+                    ),
+                    child: CupertinoDatePicker(
+                      initialDateTime: tempDateTime,
+                      mode: CupertinoDatePickerMode.time,
+                      onDateTimeChanged: (newDateTime) {
+                        tempDateTime = newDateTime;
+                      },
+                      backgroundColor: pickerBackgroundColor,
+                      use24hFormat: true,
+                      minuteInterval: 1,
+                    ),
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _selectedDate = DateTime(
+                          _selectedDate!.year,
+                          _selectedDate!.month,
+                          _selectedDate!.day,
+                          tempDateTime.hour,
+                          tempDateTime.minute,
+                        );
+                      });
+                      Navigator.of(context).pop();
+                    },
+                    icon: Icon(
+                      Icons.check_circle_outline,
+                      color: finalContentColor,
+                    ),
+                    label: Text(
+                      'Confirmar Hora',
+                      style: TextStyle(color: finalContentColor, fontSize: 16),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: finalButtonColor,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+    );
   }
 
   void _saveMeal() {
@@ -296,7 +406,6 @@ class _EditMealScreenState extends State<EditMealScreen> {
       );
       return;
     }
-
     final mealItems =
         _foods
             .map(
@@ -307,7 +416,6 @@ class _EditMealScreenState extends State<EditMealScreen> {
               ),
             )
             .toList();
-
     final updatedMeal = Meal(
       id: widget.meal.id,
       type: _selectedMealType!,
@@ -315,22 +423,39 @@ class _EditMealScreenState extends State<EditMealScreen> {
       date: _selectedDate ?? DateTime.now(),
       imagePath: _mealImage?.path,
     );
-
     widget.onUpdate(updatedMeal);
     Navigator.pop(context, updatedMeal);
   }
 
   @override
   Widget build(BuildContext context) {
+    // 💡 DEFINIÇÕES DE TEMA PARA CONTRASTE
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final accentColor =
+        isDark
+            ? theme.colorScheme.secondary
+            : Colors.deepOrange; // DeepOrange para claro, Accent para escuro
+    final lightBgColor =
+        isDark
+            ? Colors.grey.shade900
+            : Colors
+                .grey
+                .shade100; // Fundo claro adaptável (Usando shade100 que é mais neutro que orange.shade50)
+    final primaryTextColor = isDark ? Colors.white : Colors.deepOrange.shade700;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Editar Refeição'),
         backgroundColor: Colors.deepOrange,
+        foregroundColor:
+            Colors.white, // Garantir cor do título/ícones no AppBar
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
+            // --- 1. Dropdown Tipo de Refeição ---
             DropdownButtonFormField<String>(
               initialValue: _selectedMealType,
               items:
@@ -338,7 +463,12 @@ class _EditMealScreenState extends State<EditMealScreen> {
                       .map(
                         (type) => DropdownMenuItem<String>(
                           value: type,
-                          child: Text(type),
+                          child: Text(
+                            type,
+                            style: TextStyle(
+                              color: isDark ? Colors.white70 : Colors.black,
+                            ),
+                          ),
                         ),
                       )
                       .toList(),
@@ -347,24 +477,47 @@ class _EditMealScreenState extends State<EditMealScreen> {
                   _selectedMealType = value;
                 });
               },
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Tipo da refeição *',
-                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.restaurant, color: accentColor),
+                border: const OutlineInputBorder(),
+                filled: true,
+                fillColor: lightBgColor,
               ),
             ),
-            const SizedBox(height: 16),
+
+            const SizedBox(height: 20),
+
+            // --- 2. Título da Seção Alimentos ---
+            Text(
+              'Alimentos',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: primaryTextColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+
             ElevatedButton.icon(
               onPressed: _addFood,
-              icon: const Icon(Icons.add),
-              label: const Text('Adicionar alimento'),
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text(
+                'Adicionar alimento',
+                style: TextStyle(color: Colors.white),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.deepOrange,
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
             ),
+
             const SizedBox(height: 12),
+
+            // Lista de Alimentos
             if (_foods.isNotEmpty)
               ListView.builder(
                 shrinkWrap: true,
@@ -374,11 +527,31 @@ class _EditMealScreenState extends State<EditMealScreen> {
                   final food = _foods[index];
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 6),
+                    color:
+                        isDark
+                            ? Colors.grey.shade800
+                            : null, // Cor do Card adaptável
                     child: ListTile(
-                      title: Text(food['name']),
-                      subtitle: Text(food['portion']),
+                      title: Text(
+                        food['name'],
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                      subtitle: Text(
+                        food['portion'],
+                        style: TextStyle(
+                          color:
+                              isDark
+                                  ? Colors.grey.shade400
+                                  : Colors.grey.shade700,
+                        ),
+                      ),
                       trailing: IconButton(
-                        icon: const Icon(Icons.delete),
+                        icon: Icon(
+                          Icons.delete,
+                          color: isDark ? Colors.red.shade400 : Colors.red,
+                        ),
                         onPressed: () {
                           setState(() {
                             _foods.removeAt(index);
@@ -389,20 +562,36 @@ class _EditMealScreenState extends State<EditMealScreen> {
                   );
                 },
               ),
-            const SizedBox(height: 16),
+
+            const SizedBox(height: 20),
+
+            // --- 3. Título da Seção Data/Hora ---
+            Text(
+              'Data e Hora da Refeição',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: primaryTextColor, // Cor adaptável
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Botões de Data e Hora
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: _pickDate,
-                    icon: const Icon(Icons.calendar_today),
+                    icon: const Icon(Icons.calendar_today, color: Colors.white),
                     label: Text(
                       _selectedDate == null
                           ? 'Selecionar data'
                           : DateFormat('dd/MM/yyyy').format(_selectedDate!),
+                      style: const TextStyle(color: Colors.white),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepOrange,
+                      backgroundColor: Colors.deepOrange.shade400,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -412,15 +601,17 @@ class _EditMealScreenState extends State<EditMealScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _pickTime,
-                    icon: const Icon(Icons.access_time),
+                    onPressed: _showCupertinoTimePicker,
+                    icon: const Icon(Icons.access_time, color: Colors.white),
                     label: Text(
                       _selectedDate == null
                           ? 'Selecionar hora'
                           : DateFormat('HH:mm').format(_selectedDate!),
+                      style: const TextStyle(color: Colors.white),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepOrange,
+                      backgroundColor: Colors.deepOrange.shade400,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -429,27 +620,76 @@ class _EditMealScreenState extends State<EditMealScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
+
+            const SizedBox(height: 20),
+
+            // --- 4. Seção Imagem ---
+            Text(
+              'Foto da refeição',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: primaryTextColor,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Container de Imagem
+            Container(
+              height: 200,
+              decoration: BoxDecoration(
+                color: lightBgColor, // Fundo adaptável
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color:
+                      isDark
+                          ? Colors.grey.shade700
+                          : Colors.deepOrange.shade200,
+                ),
+              ),
+              child: Center(
+                child:
+                    _mealImage != null
+                        ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(
+                            _mealImage!,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          ),
+                        )
+                        : Text(
+                          'Nenhuma imagem selecionada',
+                          style: TextStyle(
+                            color: isDark ? Colors.grey[400] : Colors.grey[600],
+                          ),
+                        ),
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Botão Selecionar Imagem
+            TextButton.icon(
               onPressed: _pickImage,
-              icon: const Icon(Icons.photo_library),
-              label: const Text('Selecionar imagem'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepOrange,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+              icon: Icon(Icons.photo_library, color: accentColor),
+              label: Text(
+                'Selecionar imagem',
+                style: TextStyle(
+                  color: accentColor,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            if (_mealImage != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Image.file(_mealImage!),
-              ),
+
             const SizedBox(height: 24),
+
+            // Botão Salvar Alterações
             ElevatedButton(
               onPressed: _saveMeal,
-              child: const Text('Salvar Alterações'),
+              child: const Text(
+                'Salvar Alterações',
+                style: TextStyle(color: Colors.white),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.deepOrange,
                 shape: RoundedRectangleBorder(

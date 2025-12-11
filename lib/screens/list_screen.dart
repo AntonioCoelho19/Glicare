@@ -336,7 +336,6 @@ class _ListScreenState extends State<ListScreen> {
                     },
                     onAddMedication: (newMed) async {
                       await _medicationDB.insertMedication(newMed);
-                      await _loadData();
                     },
                   ),
             ),

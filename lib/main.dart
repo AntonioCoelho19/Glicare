@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../screens/home_screen.dart'; // ajuste o caminho da sua tela inicial
-import '../screens/settings_screen.dart'; // seu arquivo SettingsScreen
+import 'package:intl/date_symbol_data_local.dart';
+import '../screens/home_screen.dart';
+import '../screens/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await initializeDateFormatting('pt_BR', null);
 
   final prefs = await SharedPreferences.getInstance();
   final isDarkMode = prefs.getBool('darkMode') ?? false;
@@ -42,7 +46,17 @@ class _GlicareAppState extends State<GlicareApp> {
     return MaterialApp(
       title: 'Glicare',
       debugShowCheckedModeBanner: false,
+
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('pt', 'BR')],
+      locale: const Locale('pt', 'BR'),
+
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
+
       theme: ThemeData(
         brightness: Brightness.light,
         primarySwatch: Colors.teal,
@@ -52,6 +66,7 @@ class _GlicareAppState extends State<GlicareApp> {
           foregroundColor: Colors.white,
         ),
       ),
+
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         colorScheme: const ColorScheme.dark(
@@ -64,6 +79,7 @@ class _GlicareAppState extends State<GlicareApp> {
           foregroundColor: Colors.white,
         ),
       ),
+
       home: HomeScreen(
         isDarkMode: _isDarkMode,
         onThemeChanged: _updateDarkMode,

@@ -30,4 +30,9 @@ class MedicationDB {
     }
     return null;
   }
+
+  Future<void> deleteMedication(String id) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.delete('medications', where: 'id = ?', whereArgs: [id]);
+  }
 }
