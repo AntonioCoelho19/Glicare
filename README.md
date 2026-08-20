@@ -68,25 +68,25 @@ Algumas telas do aplicativo:
 ### 🏠 Tela inicial
 
 <p align="center">
-  <img src="telas_glicare/TelaInicial.jpeg" width="200"; border-radius="5px">
+  <img src="telas_glicare/TelaInicial.jpeg" width="300"; border-radius="5px">
 </p>
 
 ### 🍽️ Refeições
 
 <p align="center">
-  <img src="telas_glicare/Refeicoes.jpeg" width="200">
+  <img src="telas_glicare/Refeicoes.jpeg" width="300">
 </p>
 
 ### 💊 Registros
 
 <p align="center">
-  <img src="telas_glicare/Registros.jpeg" width="200">
+  <img src="telas_glicare/Registros.jpeg" width="300">
 </p>
 
 ### 📊 Gráficos
 
 <p align="center">
-  <img src="telas_glicare/Grafico.jpeg" width="200">
+  <img src="telas_glicare/Grafico.jpeg" width="300">
 </p>
 
 ---
