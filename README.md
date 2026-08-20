@@ -71,19 +71,18 @@ Algumas telas do aplicativo:
 
 ![Tela inicial](images/home.png)
 
-### 📊 Gráficos
-
-![Gráficos](images/graficos.png)
-
-### 💊 Medicamentos
-
-![Medicamentos](images/medicamentos.png)
-
 ### 🍽️ Refeições
 
 ![Refeições](images/refeicoes.png)
 
-> **Observação:** substitua os caminhos acima pelos nomes reais das imagens adicionadas ao repositório.
+### 💊 Registros
+
+![Medicamentos](images/medicamentos.png)
+
+### 📊 Gráficos
+
+![Gráficos](images/graficos.png)
+
 
 ---
 
