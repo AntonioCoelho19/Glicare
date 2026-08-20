@@ -65,25 +65,36 @@ A aplicação permite registrar dados como **glicemia, insulina, pressão arteri
 
 Algumas telas do aplicativo:
 
-> As imagens abaixo podem ser adicionadas conforme novas capturas de tela do projeto forem disponibilizadas.
-
 ### 🏠 Tela inicial
 
-![Tela inicial](images/home.png)
+<p align="center">
+  <img src="telas_glicare/TelaInicial.jpeg" width="200">
+</p>
 
 ### 🍽️ Refeições
 
-![Refeições](images/refeicoes.png)
+<p align="center">
+  <img src="telas_glicare/Refeicoes.jpeg" width="200">
+</p>
 
 ### 💊 Registros
 
-![Medicamentos](images/medicamentos.png)
+<p align="center">
+  <img src="telas_glicare/Registros.jpeg" width="200">
+</p>
 
 ### 📊 Gráficos
 
-![Gráficos](images/graficos.png)
+<p align="center">
+  <img src="telas_glicare/Grafico.jpeg" width="200">
+</p>
 
-
+<p align="center">
+  <img src="images/home.png" width="200">
+  <img src="images/graficos.png" width="200">
+  <img src="images/medicamentos.png" width="200">
+  <img src="images/refeicoes.png" width="200">
+</p>
 ---
 
 ## 🚀 Como executar
