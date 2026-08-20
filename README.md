@@ -68,7 +68,7 @@ Algumas telas do aplicativo:
 ### 🏠 Tela inicial
 
 <p align="center">
-  <img src="telas_glicare/TelaInicial.jpeg" width="200">
+  <img src="telas_glicare/TelaInicial.jpeg" width="200"; border-radius="5px">
 </p>
 
 ### 🍽️ Refeições
@@ -89,12 +89,6 @@ Algumas telas do aplicativo:
   <img src="telas_glicare/Grafico.jpeg" width="200">
 </p>
 
-<p align="center">
-  <img src="images/home.png" width="200">
-  <img src="images/graficos.png" width="200">
-  <img src="images/medicamentos.png" width="200">
-  <img src="images/refeicoes.png" width="200">
-</p>
 ---
 
 ## 🚀 Como executar
